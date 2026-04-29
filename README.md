@@ -1,8 +1,10 @@
 # Product Review Sentiment Analysis MVP
 
-This project is a simple but production-like prototype for collecting product reviews, preprocessing text, classifying sentiment, storing results in SQLite, and visualizing analytics in a web dashboard.
+Этот проект — простой, но приближенный к production прототип для сбора отзывов о продуктах, предобработки текста, классификации тональности (sentiment analysis), сохранения результатов в SQLite и визуализации аналитики через веб-дашборд.
 
-## Project Structure
+---
+
+# Структура проекта
 
 ```text
 .
@@ -32,45 +34,105 @@ This project is a simple but production-like prototype for collecting product re
 └── README.md
 ```
 
-## System Pipeline
+---
+
+# Архитектура пайплайна
 
 ```text
-CSV Upload -> FastAPI Backend -> Text Preprocessing -> Sentiment Model -> SQLite -> API -> Frontend Dashboard
+Загрузка CSV
+   ↓
+FastAPI Backend
+   ↓
+Предобработка текста
+   ↓
+Модель анализа тональности
+   ↓
+SQLite
+   ↓
+API
+   ↓
+Frontend Dashboard
 ```
 
-## Features
+---
 
-- Upload CSV files with product reviews
-- Preprocess review text
-  - lowercase conversion
-  - punctuation removal
-  - stopword removal
-  - tokenization
-- Sentiment analysis with a Hugging Face model
-- Automatic fallback to a lightweight rule-based analyzer if the model cannot load
-- Store results in SQLite with SQLAlchemy ORM
-- View all reviews and sentiment scores
-- Display positive, negative, and neutral percentages
-- Simple visual sentiment distribution bars
+# Возможности
 
-## Database Schema
+## Загрузка и обработка отзывов
 
-Table: `reviews`
+* Загрузка CSV-файлов с отзывами о товарах
+* Автоматическая обработка текста отзывов
 
-- `id` - integer primary key
-- `original_text` - original uploaded review
-- `processed_text` - cleaned text after preprocessing
-- `sentiment` - positive, negative, or neutral
-- `score` - confidence score from 0 to 1
-- `created_at` - timestamp
+## Предобработка текста
 
-## CSV Format
+Включает:
 
-Required column:
+* перевод текста в нижний регистр
+* удаление пунктуации
+* удаление стоп-слов
+* токенизацию
 
-- `review`
+## Анализ тональности
 
-Example:
+* Классификация отзывов как:
+
+  * Positive (положительные)
+  * Negative (отрицательные)
+  * Neutral (нейтральные)
+
+* Используется модель Hugging Face:
+
+`cardiffnlp/twitter-roberta-base-sentiment-latest`
+
+* Если модель недоступна или не загружается:
+
+  * автоматически используется облегчённый rule-based анализатор.
+
+## Хранение данных
+
+* SQLite база данных
+* ORM через SQLAlchemy
+* Сохранение:
+
+  * исходного текста
+  * обработанного текста
+  * тональности
+  * confidence score
+  * времени создания записи
+
+## Аналитика и дашборд
+
+* Просмотр всех обработанных отзывов
+* Статистика по тональности
+* Процент положительных, отрицательных и нейтральных отзывов
+* Простая визуализация распределения sentiment
+
+---
+
+# Схема базы данных
+
+## Таблица `reviews`
+
+| Поле           | Тип       | Описание                      |
+| -------------- | --------- | ----------------------------- |
+| id             | integer   | Первичный ключ                |
+| original_text  | text      | Исходный отзыв                |
+| processed_text | text      | Текст после очистки           |
+| sentiment      | string    | positive / negative / neutral |
+| score          | float     | Уверенность модели от 0 до 1  |
+| created_at     | timestamp | Время создания                |
+
+---
+
+# Формат CSV
+
+Обязательный столбец:
+
+```csv
+review
+```
+
+Пример:
 
 ```csv
 id,review
@@ -78,79 +140,134 @@ id,review
 2,"Very bad quality"
 ```
 
-## Run Locally
+---
 
-### 1. Create and activate a virtual environment
+# Запуск локально
+
+## 1. Создать и активировать виртуальное окружение
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. Install dependencies
+## 2. Установить зависимости
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure the database
+## 3. Настроить базу данных
 
-This version uses SQLite, so no external database server is required. The database file is created automatically when the app starts.
+Используется SQLite, отдельный сервер БД не нужен.
 
-Default connection string:
+Файл базы создаётся автоматически при запуске приложения.
 
-```env
+Строка подключения по умолчанию:
+
+```bash
 DATABASE_URL=sqlite:///./reviews.db
 ```
 
-You can export it in the shell:
+Можно экспортировать вручную:
 
 ```bash
 export DATABASE_URL="sqlite:///./reviews.db"
 ```
 
-### 4. Run the backend and frontend
+## 4. Запустить backend и frontend
 
-The frontend is served by FastAPI as static files, so one command starts the whole app:
+Frontend раздаётся как статические файлы через FastAPI, поэтому достаточно одной команды:
 
 ```bash
 uvicorn backend.main:app --reload
 ```
 
-Open:
+Открыть в браузере:
 
-- App: [http://localhost:8000](http://localhost:8000)
-- API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+Приложение:
 
-## Run With Docker
+```text
+http://localhost:8000
+```
+
+Swagger API Docs:
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+# Запуск через Docker
 
 ```bash
 docker compose up --build
 ```
 
-Open [http://localhost:8000](http://localhost:8000)
+После запуска:
 
-The SQLite database file will be stored in the project root as `reviews.db`.
+```text
+http://localhost:8000
+```
 
-## API Endpoints
+Файл SQLite базы (`reviews.db`) будет храниться в корне проекта.
 
-- `POST /upload` - upload and process a CSV file
-- `GET /reviews` - list all stored reviews
-- `GET /stats` - get aggregated sentiment statistics
+---
 
-## Notes About the Model
+# API Endpoints
 
-- Primary model: `cardiffnlp/twitter-roberta-base-sentiment-latest`
-- On the first run, Transformers downloads the model files, so internet access is needed once unless the model is already cached.
-- If the model is unavailable, the app still works with a simple fallback analyzer.
+## Загрузить и обработать CSV
 
-## Sample Dataset
+```http
+POST /upload
+```
 
-Use [data/sample_reviews.csv](/Users/maiisovoya/Documents/New%20project/data/sample_reviews.csv) to test uploads quickly.
+## Получить все отзывы
 
-## Thesis-Friendly Design Choices
+```http
+GET /reviews
+```
 
-- Clear separation between API, services, models, and frontend
-- Lightweight frontend with plain HTML, CSS, and JavaScript
-- Production-style backend structure with schemas and service layer
-- Simple enough to explain in a thesis presentation while still demonstrating a realistic ML pipeline
+## Получить агрегированную статистику
+
+```http
+GET /stats
+```
+
+---
+
+# Примечания по модели
+
+Основная модель:
+
+```text
+cardiffnlp/twitter-roberta-base-sentiment-latest
+```
+
+* При первом запуске Transformers скачает веса модели
+* Нужен интернет один раз (если модель не закэширована)
+* При недоступности модели приложение продолжает работать благодаря fallback-анализатору
+
+---
+
+# Тестовый датасет
+
+Для быстрой проверки можно использовать:
+
+```text
+data/sample_reviews.csv
+```
+
+---
+
+# Pipeline Summary
+
+```text
+CSV Upload
+→ Text Preprocessing
+→ Sentiment Classification
+→ SQLite Storage
+→ REST API
+→ Dashboard Analytics
+```
