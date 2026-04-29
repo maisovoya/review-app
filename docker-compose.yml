@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    container_name: reviews_app
+    volumes:
+      - ./:/app
+    environment:
+      DATABASE_URL: sqlite:///./reviews.db
+    ports:
+      - "8000:8000"

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Review Sentiment Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">University Thesis MVP</p>
+          <h1>Product Review Sentiment Analysis</h1>
+          <p class="subtitle">
+            Upload a CSV file, process reviews, classify sentiment, and inspect
+            simple analytics in one dashboard.
+          </p>
+        </div>
+        <form id="upload-form" class="upload-card">
+          <label for="csv-file">Choose CSV file</label>
+          <input id="csv-file" name="file" type="file" accept=".csv" required />
+          <button type="submit">Upload and Analyze</button>
+          <p id="upload-message" class="message"></p>
+        </form>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card positive">
+          <span>Positive</span>
+          <strong id="positive-stat">0%</strong>
+        </article>
+        <article class="stat-card negative">
+          <span>Negative</span>
+          <strong id="negative-stat">0%</strong>
+        </article>
+        <article class="stat-card neutral">
+          <span>Neutral</span>
+          <strong id="neutral-stat">0%</strong>
+        </article>
+        <article class="stat-card total">
+          <span>Total Reviews</span>
+          <strong id="total-stat">0</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Sentiment Distribution</h2>
+        </div>
+        <div class="chart">
+          <div class="chart-row">
+            <span>Positive</span>
+            <div class="bar-track"><div id="positive-bar" class="bar positive-bar"></div></div>
+          </div>
+          <div class="chart-row">
+            <span>Negative</span>
+            <div class="bar-track"><div id="negative-bar" class="bar negative-bar"></div></div>
+          </div>
+          <div class="chart-row">
+            <span>Neutral</span>
+            <div class="bar-track"><div id="neutral-bar" class="bar neutral-bar"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Processed Reviews</h2>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Original Review</th>
+                <th>Processed Text</th>
+                <th>Sentiment</th>
+                <th>Score</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody id="reviews-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
