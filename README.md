@@ -1,10 +1,42 @@
 # Product Review Sentiment Analysis MVP
 
-Этот проект — простой, но приближенный к production прототип для сбора отзывов о продуктах, предобработки текста, классификации тональности (sentiment analysis), сохранения результатов в SQLite и визуализации аналитики через веб-дашборд.
+Веб-приложение для анализа отзывов о товарах. Проект собирает отзывы из CSV-файлов или API маркетплейсов, очищает текст, определяет общую тональность, находит причины негатива по аспектам и показывает аналитику в dashboard.
 
----
+Проект сделан как MVP: архитектура простая, но приближенная к реальному backend/frontend приложению на FastAPI, SQLAlchemy и vanilla JavaScript.
 
-# Структура проекта
+## Основной pipeline
+
+```text
+CSV / Marketplace API
+  -> preprocessing
+  -> general sentiment
+  -> aspect sentiment
+  -> problem extraction
+  -> business insights
+  -> SQLite
+  -> dashboard
+```
+
+## Возможности
+
+- Загрузка отзывов из CSV-файла.
+- Сбор отзывов из поддерживаемых маркетплейсов.
+- Предобработка текста: нижний регистр, удаление пунктуации, токенизация, фильтрация стоп-слов.
+- Общий sentiment analysis: `positive`, `negative`, `neutral`.
+- Aspect-based sentiment analysis по аспектам:
+  - `quality`
+  - `delivery`
+  - `packaging`
+  - `price`
+  - `usability`
+  - `support`
+- Подсчет главных негативных проблем.
+- Генерация rule-based business insights и рекомендаций.
+- Хранение отзывов и результатов анализа в SQLite.
+- Удаление отзывов из истории с пересчетом аналитики.
+- Dashboard со статистикой, распределением тональности, проблемами, инсайтами и таблицей обработанных отзывов.
+
+## Структура проекта
 
 ```text
 .
@@ -16,9 +48,16 @@
 │   ├── schemas
 │   │   └── review.py
 │   ├── services
+│   │   ├── aspect_analysis.py
+│   │   ├── insights.py
 │   │   ├── preprocessing.py
 │   │   ├── review_service.py
-│   │   └── sentiment.py
+│   │   ├── sentiment.py
+│   │   └── marketplaces
+│   │       ├── base.py
+│   │       ├── ozon.py
+│   │       ├── wildberries.py
+│   │       └── yandex_market.py
 │   ├── database.py
 │   └── main.py
 ├── data
@@ -27,247 +66,348 @@
 │   ├── app.js
 │   ├── index.html
 │   └── styles.css
-├── .env.example
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
 ```
 
----
+## Backend
 
-# Архитектура пайплайна
+Backend написан на FastAPI.
 
-```text
-Загрузка CSV
-   ↓
-FastAPI Backend
-   ↓
-Предобработка текста
-   ↓
-Модель анализа тональности
-   ↓
-SQLite
-   ↓
-API
-   ↓
-Frontend Dashboard
-```
+Основные части:
 
----
+- `backend/main.py` - создание приложения, CORS, подключение роутов и раздача frontend.
+- `backend/api/routes.py` - HTTP endpoints.
+- `backend/database.py` - подключение к SQLite и авто-добавление недостающих колонок.
+- `backend/models/review.py` - SQLAlchemy модель отзыва.
+- `backend/schemas/review.py` - Pydantic-схемы API.
+- `backend/services/review_service.py` - сохранение, удаление, статистика и top problems.
+- `backend/services/sentiment.py` - общий анализ тональности.
+- `backend/services/aspect_analysis.py` - rule-based аспектный анализ.
+- `backend/services/insights.py` - rule-based бизнес-инсайты.
 
-# Возможности
+## Frontend
 
-## Загрузка и обработка отзывов
+Frontend сделан на HTML, CSS и JavaScript без отдельного фреймворка.
 
-* Загрузка CSV-файлов с отзывами о товарах
-* Автоматическая обработка текста отзывов
+Dashboard умеет:
 
-## Предобработка текста
-
-Включает:
-
-* перевод текста в нижний регистр
-* удаление пунктуации
-* удаление стоп-слов
-* токенизацию
+- загружать CSV;
+- запускать сбор из маркетплейса;
+- показывать проценты позитивных, негативных и нейтральных отзывов;
+- показывать распределение тональности;
+- показывать главные негативные проблемы;
+- показывать summary, уровень риска и рекомендации;
+- отображать обработанные отзывы;
+- удалять отзывы из базы и аналитики.
 
 ## Анализ тональности
 
-* Классификация отзывов как:
+Основная модель задается в `backend/services/sentiment.py`:
 
-  * Positive (положительные)
-  * Negative (отрицательные)
-  * Neutral (нейтральные)
+```text
+cointegrated/rubert-tiny-sentiment-balanced
+```
 
-* Используется модель Hugging Face:
+Если модель недоступна, используется fallback-анализатор на правилах. Он учитывает русские позитивные и негативные слова, отрицания, усилители и восклицательные знаки.
 
-`cardiffnlp/twitter-roberta-base-sentiment-latest`
+## Aspect-based sentiment analysis
 
-* Если модель недоступна или не загружается:
+Для MVP используется rule-based подход на русском языке. Каждый аспект получает результат:
 
-  * автоматически используется облегчённый rule-based анализатор.
+```json
+{
+  "quality": {"sentiment": "positive", "score": 1.0},
+  "delivery": {"sentiment": "neutral", "score": 0.0},
+  "packaging": {"sentiment": "negative", "score": 1.0}
+}
+```
 
-## Хранение данных
+Если аспект в отзыве не найден, он получает:
 
-* SQLite база данных
-* ORM через SQLAlchemy
-* Сохранение:
+```json
+{"sentiment": "neutral", "score": 0.0}
+```
 
-  * исходного текста
-  * обработанного текста
-  * тональности
-  * confidence score
-  * времени создания записи
+## Business insights
 
-## Аналитика и дашборд
+Инсайты строятся на основе общей статистики и top problems.
 
-* Просмотр всех обработанных отзывов
-* Статистика по тональности
-* Процент положительных, отрицательных и нейтральных отзывов
-* Простая визуализация распределения sentiment
+Уровень риска:
 
----
+- `high` - если доля негативных отзывов больше 40%;
+- `medium` - если доля негативных отзывов от 20% до 40%;
+- `low` - если доля негативных отзывов меньше 20%.
 
-# Схема базы данных
+Рекомендации зависят от проблемного аспекта: упаковка, доставка, качество, цена, удобство или поддержка.
 
-## Таблица `reviews`
+## База данных
 
-| Поле           | Тип       | Описание                      |
-| -------------- | --------- | ----------------------------- |
-| id             | integer   | Первичный ключ                |
-| original_text  | text      | Исходный отзыв                |
-| processed_text | text      | Текст после очистки           |
-| sentiment      | string    | positive / negative / neutral |
-| score          | float     | Уверенность модели от 0 до 1  |
-| created_at     | timestamp | Время создания                |
+Используется SQLite. По умолчанию файл базы хранится в корне проекта:
 
----
+```text
+reviews.db
+```
 
-# Формат CSV
+Таблица: `reviews`
 
-Обязательный столбец:
+| Поле | Описание |
+| --- | --- |
+| `id` | Внутренний ID отзыва |
+| `product_id` | ID товара |
+| `marketplace` | Источник отзыва |
+| `external_review_id` | ID отзыва во внешней системе |
+| `original_text` | Исходный текст |
+| `processed_text` | Текст после предобработки |
+| `rating` | Оценка товара |
+| `review_date` | Дата отзыва |
+| `author` | Автор |
+| `source_url` | Ссылка на источник |
+| `sentiment` | Общая тональность |
+| `score` | Уверенность модели |
+| `aspects` | JSON с аспектным анализом |
+| `created_at` | Дата добавления в базу |
 
-```csv
+При старте приложения выполняется простая auto-migration проверка, которая добавляет недостающие колонки в существующую таблицу.
+
+## Формат CSV
+
+Обязательная колонка:
+
+```text
 review
+```
+
+Дополнительные поддерживаемые колонки:
+
+```text
+id
+external_review_id
+product_id
+marketplace
+rating
+review_date
+author
+source_url
 ```
 
 Пример:
 
 ```csv
-id,review
-1,"Great product"
-2,"Very bad quality"
+id,review,product_id,marketplace,rating
+1,"Упаковка повреждена, коробка мятая",sku-100,csv,2
+2,"Товар качественный, пользоваться удобно",sku-100,csv,5
 ```
 
----
+Тестовый файл:
 
-# Запуск локально
+```text
+data/sample_reviews.csv
+```
 
-## 1. Создать и активировать виртуальное окружение
+## API
+
+### Загрузка CSV
+
+```http
+POST /upload
+```
+
+Принимает CSV-файл, анализирует отзывы и сохраняет их в базу.
+
+### Сбор из маркетплейса
+
+```http
+POST /collect
+```
+
+Пример тела запроса:
+
+```json
+{
+  "marketplace": "wildberries",
+  "product_id": "123456",
+  "date_from": "2026-01-01",
+  "date_to": "2026-01-31"
+}
+```
+
+Поддерживаемые значения `marketplace`:
+
+- `wildberries`
+- `yandex_market`
+- `ozon`
+
+Важно: Ozon в текущем MVP является заглушкой и возвращает `501`, пока не подключен подтвержденный API-метод.
+
+### Получить отзывы
+
+```http
+GET /reviews
+```
+
+### Удалить отзыв
+
+```http
+DELETE /reviews/{review_id}
+```
+
+Удаляет запись физически из SQLite. После удаления отзыв не участвует в `/reviews`, `/stats`, `/problems` и `/insights`.
+
+Успешный ответ:
+
+```json
+{
+  "message": "Review deleted successfully"
+}
+```
+
+### Статистика тональности
+
+```http
+GET /stats
+```
+
+Пример ответа:
+
+```json
+{
+  "total_reviews": 10,
+  "positive_percentage": 40.0,
+  "negative_percentage": 30.0,
+  "neutral_percentage": 30.0
+}
+```
+
+### Главные проблемы
+
+```http
+GET /problems
+```
+
+Пример ответа:
+
+```json
+{
+  "total_negative_aspect_mentions": 6,
+  "problems": [
+    {
+      "aspect": "packaging",
+      "count": 2,
+      "percentage": 33.33
+    }
+  ]
+}
+```
+
+### Инсайты
+
+```http
+GET /insights
+```
+
+Пример ответа:
+
+```json
+{
+  "summary": "Основная проблема товара связана с упаковкой...",
+  "risk_level": "medium",
+  "recommendations": [
+    "Проверить упаковку товара и качество защиты при доставке"
+  ]
+}
+```
+
+## Переменные окружения
+
+Базовая переменная:
+
+```env
+DATABASE_URL=sqlite:///./reviews.db
+```
+
+Для Wildberries:
+
+```env
+WB_API_TOKEN=...
+```
+
+Для Yandex Market:
+
+```env
+YANDEX_MARKET_BUSINESS_ID=...
+YANDEX_MARKET_API_KEY=...
+```
+
+## Локальный запуск
+
+Создать и активировать виртуальное окружение:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-## 2. Установить зависимости
+Установить зависимости:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 3. Настроить базу данных
-
-Используется SQLite, отдельный сервер БД не нужен.
-
-Файл базы создаётся автоматически при запуске приложения.
-
-Строка подключения по умолчанию:
-
-```bash
-DATABASE_URL=sqlite:///./reviews.db
-```
-
-Можно экспортировать вручную:
-
-```bash
-export DATABASE_URL="sqlite:///./reviews.db"
-```
-
-## 4. Запустить backend и frontend
-
-Frontend раздаётся как статические файлы через FastAPI, поэтому достаточно одной команды:
+Запустить приложение:
 
 ```bash
 uvicorn backend.main:app --reload
 ```
 
-Открыть в браузере:
-
-Приложение:
+Открыть:
 
 ```text
 http://localhost:8000
 ```
 
-Swagger API Docs:
+Swagger UI:
 
 ```text
 http://localhost:8000/docs
 ```
 
----
-
-# Запуск через Docker
+## Запуск через Docker
 
 ```bash
 docker compose up --build
 ```
 
-После запуска:
+После запуска открыть:
 
 ```text
 http://localhost:8000
 ```
 
-Файл SQLite базы (`reviews.db`) будет храниться в корне проекта.
+Если нужно применить изменения после правок кода:
 
----
-
-# API Endpoints
-
-## Загрузить и обработать CSV
-
-```http
-POST /upload
+```bash
+docker compose down
+docker compose up --build
 ```
 
-## Получить все отзывы
+## Быстрые curl-примеры
 
-```http
-GET /reviews
+```bash
+curl http://localhost:8000/reviews
+curl http://localhost:8000/stats
+curl http://localhost:8000/problems
+curl http://localhost:8000/insights
+curl -X DELETE http://localhost:8000/reviews/1
 ```
 
-## Получить агрегированную статистику
+## Ограничения MVP
 
-```http
-GET /stats
-```
-
----
-
-# Примечания по модели
-
-Основная модель:
-
-```text
-cardiffnlp/twitter-roberta-base-sentiment-latest
-```
-
-* При первом запуске Transformers скачает веса модели
-* Нужен интернет один раз (если модель не закэширована)
-* При недоступности модели приложение продолжает работать благодаря fallback-анализатору
-
----
-
-# Тестовый датасет
-
-Для быстрой проверки можно использовать:
-
-```text
-data/sample_reviews.csv
-```
-
----
-
-# Pipeline Summary
-
-```text
-CSV Upload
-→ Text Preprocessing
-→ Sentiment Classification
-→ SQLite Storage
-→ REST API
-→ Dashboard Analytics
-```
+- Aspect analysis и insights сделаны rule-based, без отдельной LLM.
+- SQLite подходит для прототипа, но для production лучше использовать PostgreSQL.
+- Ozon-клиент пока не подключен к реальному API.
+- Первый запуск ML-модели может потребовать интернет для загрузки весов.
+- CSV читается как UTF-8.
+- Дедупликация внешних отзывов работает по паре `marketplace + external_review_id`; CSV-записи могут загружаться повторно.
