@@ -1,6 +1,8 @@
-id,review
-1,"Great product and excellent quality"
-2,"The item is awful and I am disappointed"
-3,"It works as expected, nothing special"
-4,"Amazing design, I love it"
-5,"Poor packaging but the product is okay"
+id,review,product_id,marketplace,rating
+1,"Товар качественный, отличный материал, пользоваться удобно",sku-100,csv,5
+2,"Упаковка повреждена, коробка мятая, но сам товар работает",sku-100,csv,2
+3,"Долго шло, была задержка, доставка ужасная",sku-100,csv,1
+4,"Плохое качество, через неделю сломался, похоже на брак",sku-100,csv,1
+5,"Хорошая цена, стоит своих денег, пришло быстро",sku-100,csv,5
+6,"Не стоит своих денег, дорого и поддержка не отвечает",sku-100,csv,2
+7,"Порванная упаковка, пришло разбитое, поддержка не помогла",sku-100,csv,1

@@ -18,7 +18,7 @@
 
 body {
   margin: 0;
-  font-family: "Georgia", "Times New Roman", serif;
+  font-family: "Inter", "Arial", sans-serif;
   background:
     radial-gradient(circle at top left, rgba(217, 128, 46, 0.22), transparent 24%),
     linear-gradient(180deg, #fbf5ea 0%, #f2e8d6 100%);
@@ -35,8 +35,9 @@ body {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
   margin-bottom: 24px;
+  min-height: 330px;
 }
 
 .eyebrow {
@@ -58,10 +59,20 @@ h1 {
 }
 
 .subtitle {
-  max-width: 700px;
+  max-width: 680px;
   color: var(--muted);
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.55;
+  max-height: 156px;
+  overflow: auto;
+  padding-right: 10px;
+}
+
+.source-forms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-self: stretch;
 }
 
 .upload-card,
@@ -89,6 +100,17 @@ input[type="file"] {
   padding: 12px;
 }
 
+input[type="text"],
+input[type="date"],
+select {
+  width: 100%;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  color: var(--text);
+}
+
 button {
   border: none;
   border-radius: 999px;
@@ -97,6 +119,24 @@ button {
   color: #fffdf9;
   font-weight: 700;
   cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+}
+
+.delete-btn:hover {
+  opacity: 0.7;
 }
 
 .message {
@@ -141,6 +181,12 @@ button {
 .panel {
   padding: 22px;
   margin-bottom: 24px;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 16px;
 }
 
 .panel-header {
@@ -210,13 +256,21 @@ th {
   font-size: 0.9rem;
 }
 
+th:last-child,
+td:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--surface-strong);
+  min-width: 72px;
+  text-align: center;
+}
+
 .sentiment-pill {
   display: inline-block;
   padding: 6px 10px;
   border-radius: 999px;
   color: #fff;
   font-size: 0.85rem;
-  text-transform: capitalize;
 }
 
 .sentiment-positive {
@@ -231,9 +285,47 @@ th {
   background: var(--neutral);
 }
 
+.risk-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--positive);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.risk-medium {
+  background: var(--neutral);
+}
+
+.risk-high {
+  background: var(--negative);
+}
+
+.insights-summary {
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.recommendations-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 @media (max-width: 900px) {
   .hero,
+  .insights-grid,
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .source-forms {
     grid-template-columns: 1fr;
   }
 }

@@ -6,15 +6,16 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.api.routes import router
-from backend.database import Base, engine
+from backend.database import Base, engine, ensure_review_table_schema
 from backend.models.review import Review  # noqa: F401
 
 
 Base.metadata.create_all(bind=engine)
+ensure_review_table_schema()
 
 app = FastAPI(
     title="Product Review Sentiment Analysis",
-    description="Upload product reviews, analyze sentiment, and explore statistics.",
+    description="Collect product reviews from CSV files and marketplaces, analyze sentiment, and explore statistics.",
     version="1.0.0",
 )
 
