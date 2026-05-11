@@ -240,8 +240,6 @@ POST /collect
 - `yandex_market`
 - `ozon`
 
-Важно: Ozon в текущем MVP является заглушкой и возвращает `501`, пока не подключен подтвержденный API-метод.
-
 ### Получить отзывы
 
 ```http
@@ -403,11 +401,3 @@ curl http://localhost:8000/insights
 curl -X DELETE http://localhost:8000/reviews/1
 ```
 
-## Ограничения MVP
-
-- Aspect analysis и insights сделаны rule-based, без отдельной LLM.
-- SQLite подходит для прототипа, но для production лучше использовать PostgreSQL.
-- Ozon-клиент пока не подключен к реальному API.
-- Первый запуск ML-модели может потребовать интернет для загрузки весов.
-- CSV читается как UTF-8.
-- Дедупликация внешних отзывов работает по паре `marketplace + external_review_id`; CSV-записи могут загружаться повторно.
